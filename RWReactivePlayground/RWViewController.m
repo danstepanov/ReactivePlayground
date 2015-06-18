@@ -17,8 +17,6 @@
 @property (weak, nonatomic) IBOutlet UIButton *signInButton;
 @property (weak, nonatomic) IBOutlet UILabel *signInFailureText;
 
-@property (nonatomic) BOOL passwordIsValid;
-@property (nonatomic) BOOL usernameIsValid;
 @property (strong, nonatomic) RWDummySignInService *signInService;
 
 @end
@@ -26,18 +24,12 @@
 @implementation RWViewController
 
 - (void)viewDidLoad {
-  [super viewDidLoad];
-  
-  [self updateUIState];
-  
-  self.signInService = [RWDummySignInService new];
-  
-  // handle text changes for both text fields
-  [self.usernameTextField addTarget:self action:@selector(usernameTextFieldChanged) forControlEvents:UIControlEventEditingChanged];
-  [self.passwordTextField addTarget:self action:@selector(passwordTextFieldChanged) forControlEvents:UIControlEventEditingChanged];
-  
-  // initially hide the failure message
-  self.signInFailureText.hidden = YES;
+    [super viewDidLoad];
+    
+    self.signInService = [RWDummySignInService new];
+
+    // initially hide the failure message
+    self.signInFailureText.hidden = YES;
     
     // This creates a signal called validUsernameSignal that takes the current text from the usernameTextField and, using a map function that takes a string called 'username', returns the boolean value of isValidUsername as it pertains to the passed 'username' string.
     RACSignal *validUsernameSignal = [self.usernameTextField.rac_textSignal map:^id(NSString *username) {return @([self isValidUsername:username]);}];
@@ -85,28 +77,6 @@
                                 [self performSegueWithIdentifier:@"signInSuccess" sender:self];
                               }
                             }];
-}
-
-
-// This method updates the enabled state of the sign in button based on the return value of both userNameIsValid and passwordIsValid. If both return YES then the sign in button is enabled, otherwise it is not enabled
-- (void)updateUIState {
-    self.signInButton.enabled = self.usernameIsValid && self.passwordIsValid;
-}
-
-// This method sets the usernameIsValid boolean value to YES if the isValidUsername boolean returns YES
-// Alternatively, this method will set the usernameIsValid boolean value to NO if the isValidUsername boolean returns NO
-// Finally, this method calls updateUIState to set the state of the sign in button as appropriate
-- (void)usernameTextFieldChanged {
-  self.usernameIsValid = [self isValidUsername:self.usernameTextField.text];
-  [self updateUIState];
-}
-
-// This method sets the passwordIsValid boolean value to YES if the isValidPassword boolean returns YES
-// Alternatively, this method will set the passwordIsValid boolean value to NO if the isValidPassword boolean returns NO
-// Finally, this method calls updateUIState to set the state of the sign in button as appropriate
-- (void)passwordTextFieldChanged {
-  self.passwordIsValid = [self isValidPassword:self.passwordTextField.text];
-  [self updateUIState];
 }
 
 @end
