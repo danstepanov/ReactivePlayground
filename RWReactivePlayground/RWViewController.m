@@ -48,6 +48,9 @@
     
     // This is simply a subscription to signUpButtonEnabledSignal to link the signal's boolean value to the enabled property of the signInButton
     [signUpButtonEnabledSignal subscribeNext:^(NSNumber *signUpActive){self.signInButton.enabled = [signUpActive boolValue];}];
+    
+    // creates signal from event of signInButton being clicked and creates a subscription that prints 'Button Pressed' everytime this occurs
+    [[self.signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(id x){NSLog(@"Button Pressed");}];
 
 }
 
