@@ -49,11 +49,23 @@
     // This is simply a subscription to signUpButtonEnabledSignal to link the signal's boolean value to the enabled property of the signInButton
     [signUpButtonEnabledSignal subscribeNext:^(NSNumber *signUpActive){self.signInButton.enabled = [signUpActive boolValue];}];
     
-    // creates signal from event of signInButton being clicked and creates a subscription that prints 'Button Pressed' everytime this occurs
-    [[self.signInButton rac_signalForControlEvents:UIControlEventTouchUpInside] subscribeNext:^(id x){NSLog(@"Button Pressed");}];
-
+    // creates signal from event of signInButton being clicked and uses map to turn the signal into the signInSignal. Also a subscription is created to log the result
+    [[[[self.signInButton rac_signalForControlEvents:UIControlEventTouchUpInside]
+       doNext:^(id x) {
+           self.signInButton.enabled = NO;
+           self.signInFailureText.hidden= YES;
+       }]
+     flattenMap:^id(id x) {
+         return [self signInSignal];
+     }]
+     subscribeNext:^(NSNumber *signedIn){
+         BOOL success = [signedIn boolValue];
+         self.signInFailureText.hidden = success;
+         if (success == YES) {
+             [self performSegueWithIdentifier:@"signInSuccess" sender:self];
+         }
+    }];
 }
-
 
 // This boolean takes a string called 'username' and returns YES if the string is longer than 3 characters. Otherwise it returns NO
 - (BOOL)isValidUsername:(NSString *)username {
@@ -65,21 +77,14 @@
   return password.length > 3;
 }
 
-- (IBAction)signInButtonTouched:(id)sender {
-  // disable all UI controls
-  self.signInButton.enabled = NO;
-  self.signInFailureText.hidden = YES;
-  
-  // sign in
-  [self.signInService signInWithUsername:self.usernameTextField.text
-                            password:self.passwordTextField.text
-                            complete:^(BOOL success) {
-                              self.signInButton.enabled = YES;
-                              self.signInFailureText.hidden = success;
-                              if (success) {
-                                [self performSegueWithIdentifier:@"signInSuccess" sender:self];
-                              }
-                            }];
+- (RACSignal *)signInSignal {
+    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber){
+        [self.signInService signInWithUsername:self.usernameTextField.text password:self.passwordTextField.text complete:^(BOOL success) {
+            [subscriber sendNext:@(success)];
+            [subscriber sendCompleted];
+        }];
+    return nil;
+  }];
 }
 
 @end
